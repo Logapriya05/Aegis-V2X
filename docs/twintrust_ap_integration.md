@@ -39,6 +39,32 @@ All fitted or selected values below come from the **live-drive browser simulatio
     - twin correct 51.2% vs 54.7%;
     - synchronisation 48.7 vs 45.8 per second, moved to degraded links rather than reduced.
 
+## Literature baseline, repeated runs and timing (2026-11-06)
+
+All of this was run in the live-drive simulation. Details are in `research/README.md` sections 6–7 of `Logapriya05/aegis-v2x-live-drive`.
+
+- **Baseline: age-of-information (AoI) threshold updates.** The twin syncs (with a beam sweep) when the mean V2X information age exceeds a threshold (Kaul, Yates, Gruteser, IEEE INFOCOM 2012; Sun et al., IEEE Trans. Inf. Theory 2017). This is our implementation of the idea in the simulation.
+  - The threshold was chosen on the selection seeds.
+  - 0.8 s is the main baseline: lowest J, and about the same sync budget as the fixed policy.
+  - 0.2 s is kept as a high-accuracy reference.
+- **Repeated runs:** 3 new seed sets, 8 conditions × 150 s each. The 95% CIs use Student's t over the sets.
+
+| Policy | J | Twin correct | Syncs/s |
+|---|---:|---:|---:|
+| TwinTrust-AP (b1) | 0.092 | 52.5% | 49.5 |
+| Fixed | 0.129 | 56.6% | 44.8 |
+| AoI 0.8 s | 0.136 | 56.5% | 48.2 |
+| AoI 0.2 s | 0.215 | 69.1% | 274.1 |
+
+  - **ΔJ (b1 − other):** fixed −0.036 [−0.047, −0.026]; AoI 0.8 s −0.044 [−0.065, −0.023].
+  - **Δ twin correct:** −4.1 points vs fixed [−8.8, +0.7]; −4.0 points vs AoI 0.8 s [−7.0, −0.9].
+  - **The accuracy constraint is still not met.**
+- **Decision time:** `evaluation/benchmark_twintrust_ap.py`.
+  - Measured: one cycle (evidence → calibrated trust → criticality → TAHS → FSDP) took a mean of 13.2 µs (p99 32.7 µs) over 20,000 cycles.
+  - Machine: a 2-vCPU Xeon 2.1 GHz cloud VM.
+  - Not measured on a Jetson Orin. Re-run it on the target machine.
+- **Reproducibility:** seeded runs are statistically repeatable but not bit-identical. The demo's 2.5 s load warm-up runs in real time.
+
 ## Known limitations found
 
 - **Short horizons under delay.** When information is stale and trust is low, TAHS picks short horizons. The twin then cannot bridge the delay, and a fixed 0.5 s horizon does better.
