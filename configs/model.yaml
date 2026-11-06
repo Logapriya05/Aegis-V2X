@@ -25,9 +25,9 @@ trust_estimator:
   # Target: twin object within 1.0 m of the LiDAR-observed position on the next cycle.
   # 8000 training / 3992 held-out cycles; held-out ECE 0.1288 -> 0.0419.
   platt_calibration:
-    a: 3.303141462160305
-    b: 0.659756591983696
-    fitted_on: "live-drive simulation, 8 conditions, 2026-11-04"
+    a: 4.398645468120582
+    b: 1.1421320450667993
+    fitted_on: "live-drive simulation, 8 conditions, 3GPP TR 37.885 channel, GRU twin predictor, estimate-based twin correctness, 2026-11-06"
 
 criticality_estimator:
   # C_t = sum(alpha_i * f_i), sum(alpha_i) = 1
@@ -96,6 +96,12 @@ perception:
     hidden_size: 128
     num_layers: 2
     input_features: ["csi", "snr", "beam_index", "mobility"]
+  # Twin motion predictor profile (ai/gru/train_twin_predictor.py): the same GRUPredictor
+  # architecture, small enough for 10 Hz prediction of every road user in the live demo.
+  gru_twin:
+    hidden_size: 32
+    num_layers: 1
+    input_features: ["forward_offset", "lateral_offset", "speed", "sin_heading_change", "age"]
 
 objective_function:
   # J = w1*L + w2*E + w3*O + w4*F - w5*R
@@ -126,13 +132,27 @@ twintrust_ap:
     relative_speed_ref_mps: 20.0
     density_ref: 20.0
     correct_within_m: 1.0
-  # mmWave beam model used by the live-drive demo for V2V links (design choices for an
-  # FR2 24-52 GHz link, not measured): a link is misaligned when the bearing to the other
-  # vehicle has drifted more than half the beamwidth from the bearing at the last beam
-  # sweep; misaligned links add up to max_extra_loss packet loss and count as blocked in
-  # the criticality blockage feature. A beam_switch action re-sweeps all links
-  # (outage sweep_s). The fixed baseline sweeps every 1 s together with its sync.
+  # mmWave V2V channel and beam model used by the live-drive demo (2026-11-06). Pathloss,
+  # vehicle blockage and shadowing follow 3GPP TR 37.885 (V2V urban); the beam gain follows the
+  # 3GPP TR 38.901 element pattern A(theta) = -min(12 (theta/theta3dB)^2, 30 dB) with theta3dB =
+  # beamwidth_deg and theta = drift of the bearing since the last beam sweep. Link state comes from
+  # the simulated geometry: NLOS (building), NLOSv (vehicle within blocker_radius_m of the line of
+  # sight), else LOS. The link budget values are design choices, not measured. A link counts as
+  # degraded in the criticality blockage feature when it is NLOS or NLOSv, or misaligned by more
+  # than half the beamwidth. A beam_switch action re-sweeps all links (outage sweep_s) and, for 2 s,
+  # replaces NLOS links by a reflected path (LOS pathloss + relay_extra_loss_db). The fixed
+  # baseline sweeps every 1 s together with its sync.
   beam:
     beamwidth_deg: 12.0
-    max_extra_loss: 0.7
     sweep_s: 0.02
+  channel:
+    carrier_ghz: 30.0
+    tx_power_dbm: 23.0
+    antenna_gain_dbi: 10.0
+    bandwidth_mhz: 400.0
+    noise_figure_db: 9.0
+    snr50_db: 3.0
+    per_slope_db: 0.8
+    relay_extra_loss_db: 10.0
+    shadow_decorrelation_m: 10.0
+    blocker_radius_m: 1.2
