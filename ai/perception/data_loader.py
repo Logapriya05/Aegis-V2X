@@ -222,16 +222,13 @@ class Phase4DataLoader:
         samples: list[PerceptionSample] = []
         skip = 0
         while True:
-            resp = requests.get(
-                url,
-                params={
-                    "scene_id": scene_id,
-                    "vehicle_id": vehicle_id,
-                    "skip": skip,
-                    "limit": page_size,
-                },
-                timeout=self.timeout_s,
-            )
+            query: dict[str, str | int] = {
+                "scene_id": scene_id,
+                "vehicle_id": vehicle_id,
+                "skip": skip,
+                "limit": page_size,
+            }
+            resp = requests.get(url, params=query, timeout=self.timeout_s)
             resp.raise_for_status()
             page = resp.json()
             if not page:
