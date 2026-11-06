@@ -142,6 +142,12 @@ twintrust_ap:
   # than half the beamwidth. A beam_switch action re-sweeps all links (outage sweep_s) and, for 2 s,
   # replaces NLOS links by a reflected path (LOS pathloss + relay_extra_loss_db). The fixed
   # baseline sweeps every 1 s together with its sync.
+  # TwinTrust-AP only (ai/twintrust_ap/twin_adaptation.py; demo research/README.md section 10):
+  # age_bridging keeps prediction on and raises the horizon to cover the mean information age;
+  # beam_tracking steers tracked beams to the twin's predicted vehicle positions between sweeps.
+  adaptation:
+    age_bridging: true
+    beam_tracking: true
   beam:
     beamwidth_deg: 12.0
     sweep_s: 0.02
