@@ -33,22 +33,39 @@ from ai.trust_estimator.model import (
 from digital_twin.state import ChannelState, DigitalTwinState, EnvironmentalContext, MobilityState
 
 
-def _make_state(prediction_uncertainty=0.2, sync_age_seconds=0.05, metadata=None) -> DigitalTwinState:
+def _make_state(
+    prediction_uncertainty=0.2, sync_age_seconds=0.05, metadata=None
+) -> DigitalTwinState:
     """SYNTHETIC fixture -- a small, deterministic DigitalTwinState."""
     return DigitalTwinState(
         timestamp=10.0,
         channel=ChannelState(csi=None, snr=20.0, beam_index=3, path_loss=90.0),
-        mobility=MobilityState(position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0),
-        environment=EnvironmentalContext(weather="clear_day", traffic_density="sparse", blockage_probability=0.05),
+        mobility=MobilityState(
+            position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0
+        ),
+        environment=EnvironmentalContext(
+            weather="clear_day", traffic_density="sparse", blockage_probability=0.05
+        ),
         prediction_uncertainty=prediction_uncertainty,
         sync_age_seconds=sync_age_seconds,
-        metadata=metadata if metadata is not None else {"scene_id": "synthetic_scene", "vehicle_id": "synthetic_veh"},
+        metadata=(
+            metadata
+            if metadata is not None
+            else {"scene_id": "synthetic_scene", "vehicle_id": "synthetic_veh"}
+        ),
     )
 
 
-def _hand_sigmoid(prediction_error, prediction_uncertainty, sync_age_penalty, comm_quality, weights, tau) -> float:
+def _hand_sigmoid(
+    prediction_error, prediction_uncertainty, sync_age_penalty, comm_quality, weights, tau
+) -> float:
     w1, w2, w3, w4 = weights
-    raw = w4 * comm_quality - w1 * prediction_error - w2 * prediction_uncertainty - w3 * sync_age_penalty
+    raw = (
+        w4 * comm_quality
+        - w1 * prediction_error
+        - w2 * prediction_uncertainty
+        - w3 * sync_age_penalty
+    )
     return 1.0 / (1.0 + math.exp(-raw / tau))
 
 
@@ -139,40 +156,71 @@ def test_output_is_bounded_in_unit_interval():
 
 def test_increasing_prediction_error_lowers_trust():
     est = TwinTrustEstimator()
-    low = est.compute_trust_from_evidence(prediction_error=0.1, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.5)
-    high = est.compute_trust_from_evidence(prediction_error=0.9, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.5)
+    low = est.compute_trust_from_evidence(
+        prediction_error=0.1, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.5
+    )
+    high = est.compute_trust_from_evidence(
+        prediction_error=0.9, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.5
+    )
     assert high < low
 
 
 def test_increasing_uncertainty_lowers_trust():
     est = TwinTrustEstimator()
-    low = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.1, sync_age_penalty=0.05, comm_quality=0.5)
-    high = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.9, sync_age_penalty=0.05, comm_quality=0.5)
+    low = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.1, sync_age_penalty=0.05, comm_quality=0.5
+    )
+    high = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.9, sync_age_penalty=0.05, comm_quality=0.5
+    )
     assert high < low
 
 
 def test_increasing_sync_age_penalty_lowers_trust():
     est = TwinTrustEstimator()
-    low = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.01, comm_quality=0.5)
-    high = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=2.0, comm_quality=0.5)
+    low = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.01, comm_quality=0.5
+    )
+    high = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=2.0, comm_quality=0.5
+    )
     assert high < low
 
 
 def test_increasing_comm_quality_raises_trust():
     est = TwinTrustEstimator()
-    low = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.1)
-    high = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.9)
+    low = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.1
+    )
+    high = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.9
+    )
     assert high > low
 
 
 def test_non_finite_evidence_rejected():
     est = TwinTrustEstimator()
     with pytest.raises(ValueError):
-        est.compute_trust_from_evidence(prediction_error=float("nan"), prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.5)
+        est.compute_trust_from_evidence(
+            prediction_error=float("nan"),
+            prediction_uncertainty=0.2,
+            sync_age_penalty=0.05,
+            comm_quality=0.5,
+        )
     with pytest.raises(ValueError):
-        est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=float("inf"))
+        est.compute_trust_from_evidence(
+            prediction_error=0.2,
+            prediction_uncertainty=0.2,
+            sync_age_penalty=0.05,
+            comm_quality=float("inf"),
+        )
     with pytest.raises(ValueError):
-        est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=float("nan"), comm_quality=0.5)
+        est.compute_trust_from_evidence(
+            prediction_error=0.2,
+            prediction_uncertainty=0.2,
+            sync_age_penalty=float("nan"),
+            comm_quality=0.5,
+        )
 
 
 # --- 4. Parameter validation ---
@@ -180,7 +228,9 @@ def test_non_finite_evidence_rejected():
 
 def test_custom_valid_weights_work():
     est = TwinTrustEstimator(weights=(0.4, 0.3, 0.2, 0.1))
-    result = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.6)
+    result = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.6
+    )
     expected = _hand_sigmoid(0.2, 0.2, 0.05, 0.6, (0.4, 0.3, 0.2, 0.1), DEFAULT_TAU)
     assert math.isclose(result, expected, rel_tol=1e-9)
 
@@ -188,7 +238,9 @@ def test_custom_valid_weights_work():
 def test_custom_tau_works():
     est = TwinTrustEstimator(tau=2.0)
     assert est.tau == 2.0
-    result = est.compute_trust_from_evidence(prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.6)
+    result = est.compute_trust_from_evidence(
+        prediction_error=0.2, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.6
+    )
     expected = _hand_sigmoid(0.2, 0.2, 0.05, 0.6, DEFAULT_WEIGHTS, 2.0)
     assert math.isclose(result, expected, rel_tol=1e-9)
 
@@ -229,7 +281,10 @@ def test_scalar_tensor_uncertainty_accepted():
     """
     est = TwinTrustEstimator()
     result = est.compute_trust_from_evidence(
-        prediction_error=0.1, prediction_uncertainty=torch.tensor(0.3), sync_age_penalty=0.05, comm_quality=0.5
+        prediction_error=0.1,
+        prediction_uncertainty=torch.tensor(0.3),
+        sync_age_penalty=0.05,
+        comm_quality=0.5,
     )
     expected = _hand_sigmoid(0.1, 0.3, 0.05, 0.5, DEFAULT_WEIGHTS, DEFAULT_TAU)
     assert math.isclose(result, expected, rel_tol=1e-6)
@@ -242,7 +297,10 @@ def test_multi_element_tensor_uncertainty_uses_documented_mean_reduction():
     est = TwinTrustEstimator()
     tensor_uncertainty = torch.tensor([[0.1, 0.2, 0.3, 0.4]])  # mean = 0.25
     result = est.compute_trust_from_evidence(
-        prediction_error=0.1, prediction_uncertainty=tensor_uncertainty, sync_age_penalty=0.05, comm_quality=0.5
+        prediction_error=0.1,
+        prediction_uncertainty=tensor_uncertainty,
+        sync_age_penalty=0.05,
+        comm_quality=0.5,
     )
     expected = _hand_sigmoid(0.1, 0.25, 0.05, 0.5, DEFAULT_WEIGHTS, DEFAULT_TAU)
     assert math.isclose(result, expected, rel_tol=1e-9)
@@ -252,8 +310,10 @@ def test_non_finite_tensor_uncertainty_rejected():
     est = TwinTrustEstimator()
     with pytest.raises(ValueError):
         est.compute_trust_from_evidence(
-            prediction_error=0.1, prediction_uncertainty=torch.tensor([0.1, float("nan")]),
-            sync_age_penalty=0.05, comm_quality=0.5,
+            prediction_error=0.1,
+            prediction_uncertainty=torch.tensor([0.1, float("nan")]),
+            sync_age_penalty=0.05,
+            comm_quality=0.5,
         )
 
 
@@ -261,8 +321,10 @@ def test_empty_tensor_uncertainty_rejected():
     est = TwinTrustEstimator()
     with pytest.raises(ValueError):
         est.compute_trust_from_evidence(
-            prediction_error=0.1, prediction_uncertainty=torch.tensor([]),
-            sync_age_penalty=0.05, comm_quality=0.5,
+            prediction_error=0.1,
+            prediction_uncertainty=torch.tensor([]),
+            sync_age_penalty=0.05,
+            comm_quality=0.5,
         )
 
 
@@ -272,8 +334,10 @@ def test_non_numeric_non_tensor_uncertainty_rejected():
     est = TwinTrustEstimator()
     with pytest.raises(ValueError):
         est.compute_trust_from_evidence(
-            prediction_error=0.1, prediction_uncertainty="not a number",  # type: ignore[arg-type]
-            sync_age_penalty=0.05, comm_quality=0.5,
+            prediction_error=0.1,
+            prediction_uncertainty="not a number",  # type: ignore[arg-type]
+            sync_age_penalty=0.05,
+            comm_quality=0.5,
         )
 
 
@@ -353,8 +417,12 @@ def test_compute_trust_from_evidence_requires_all_four_arguments_explicitly():
 
 def test_compute_trust_from_evidence_is_deterministic():
     est = TwinTrustEstimator()
-    r1 = est.compute_trust_from_evidence(prediction_error=0.15, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.65)
-    r2 = est.compute_trust_from_evidence(prediction_error=0.15, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.65)
+    r1 = est.compute_trust_from_evidence(
+        prediction_error=0.15, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.65
+    )
+    r2 = est.compute_trust_from_evidence(
+        prediction_error=0.15, prediction_uncertainty=0.2, sync_age_penalty=0.05, comm_quality=0.65
+    )
     assert r1 == r2
 
 

@@ -46,9 +46,7 @@ class Experiment(Base):
 
     __tablename__ = "experiments"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
     description: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     config: Mapped[dict | None] = mapped_column(JSON, nullable=True)

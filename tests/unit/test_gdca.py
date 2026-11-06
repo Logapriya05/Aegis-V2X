@@ -40,8 +40,12 @@ def make_state(position=(0.0, 0.0, 0.0)) -> DigitalTwinState:
     return DigitalTwinState(
         timestamp=0.0,
         channel=ChannelState(csi=None, snr=0.0, beam_index=0, path_loss=0.0),
-        mobility=MobilityState(position=position, velocity=(0.0, 0.0, 0.0), heading=0.0, relative_speed=0.0),
-        environment=EnvironmentalContext(weather="clear_day", traffic_density="sparse", blockage_probability=0.0),
+        mobility=MobilityState(
+            position=position, velocity=(0.0, 0.0, 0.0), heading=0.0, relative_speed=0.0
+        ),
+        environment=EnvironmentalContext(
+            weather="clear_day", traffic_density="sparse", blockage_probability=0.0
+        ),
         prediction_uncertainty=0.0,
         sync_age_seconds=0.0,
     )

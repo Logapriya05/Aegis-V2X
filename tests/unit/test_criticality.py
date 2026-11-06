@@ -37,11 +37,19 @@ def _make_state(metadata=None) -> DigitalTwinState:
     return DigitalTwinState(
         timestamp=10.0,
         channel=ChannelState(csi=None, snr=20.0, beam_index=3, path_loss=90.0),
-        mobility=MobilityState(position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0),
-        environment=EnvironmentalContext(weather="clear_day", traffic_density="sparse", blockage_probability=0.05),
+        mobility=MobilityState(
+            position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0
+        ),
+        environment=EnvironmentalContext(
+            weather="clear_day", traffic_density="sparse", blockage_probability=0.05
+        ),
         prediction_uncertainty=0.2,
         sync_age_seconds=0.05,
-        metadata=metadata if metadata is not None else {"scene_id": "synthetic_scene", "vehicle_id": "synthetic_veh"},
+        metadata=(
+            metadata
+            if metadata is not None
+            else {"scene_id": "synthetic_scene", "vehicle_id": "synthetic_veh"}
+        ),
     )
 
 
@@ -127,7 +135,11 @@ def test_valid_evidence_matches_hand_computed_formula():
 def test_custom_weights_matches_hand_computed_formula():
     est = CriticalityEstimator(weights=(0.4, 0.2, 0.2, 0.1, 0.1))
     result = est.compute_criticality_from_evidence(
-        relative_speed=0.5, blockage_probability=0.5, sync_age=0.5, channel_degradation=0.5, traffic_density=0.5
+        relative_speed=0.5,
+        blockage_probability=0.5,
+        sync_age=0.5,
+        channel_degradation=0.5,
+        traffic_density=0.5,
     )
     expected = (0.4 + 0.2 + 0.2 + 0.1 + 0.1) * 0.5
     assert math.isclose(result, expected, rel_tol=1e-9)
@@ -139,7 +151,11 @@ def test_custom_weights_matches_hand_computed_formula():
 def test_all_zero_evidence_produces_zero():
     est = CriticalityEstimator()
     result = est.compute_criticality_from_evidence(
-        relative_speed=0.0, blockage_probability=0.0, sync_age=0.0, channel_degradation=0.0, traffic_density=0.0
+        relative_speed=0.0,
+        blockage_probability=0.0,
+        sync_age=0.0,
+        channel_degradation=0.0,
+        traffic_density=0.0,
     )
     assert math.isclose(result, 0.0, abs_tol=1e-9)
 
@@ -147,7 +163,11 @@ def test_all_zero_evidence_produces_zero():
 def test_all_one_evidence_produces_one():
     est = CriticalityEstimator()
     result = est.compute_criticality_from_evidence(
-        relative_speed=1.0, blockage_probability=1.0, sync_age=1.0, channel_degradation=1.0, traffic_density=1.0
+        relative_speed=1.0,
+        blockage_probability=1.0,
+        sync_age=1.0,
+        channel_degradation=1.0,
+        traffic_density=1.0,
     )
     assert math.isclose(result, 1.0, abs_tol=1e-9)
 
@@ -159,11 +179,19 @@ def test_non_finite_evidence_rejected():
     est = CriticalityEstimator()
     with pytest.raises(ValueError):
         est.compute_criticality_from_evidence(
-            relative_speed=float("nan"), blockage_probability=0.5, sync_age=0.5, channel_degradation=0.5, traffic_density=0.5
+            relative_speed=float("nan"),
+            blockage_probability=0.5,
+            sync_age=0.5,
+            channel_degradation=0.5,
+            traffic_density=0.5,
         )
     with pytest.raises(ValueError):
         est.compute_criticality_from_evidence(
-            relative_speed=0.5, blockage_probability=float("inf"), sync_age=0.5, channel_degradation=0.5, traffic_density=0.5
+            relative_speed=0.5,
+            blockage_probability=float("inf"),
+            sync_age=0.5,
+            channel_degradation=0.5,
+            traffic_density=0.5,
         )
 
 
@@ -171,11 +199,11 @@ def test_non_scalar_evidence_rejected():
     est = CriticalityEstimator()
     with pytest.raises(ValueError):
         est.compute_criticality_from_evidence(
-            relative_speed=[0.5], blockage_probability=0.5, sync_age=0.5, channel_degradation=0.5, traffic_density=0.5  # type: ignore[arg-type]
+            relative_speed=[0.5], blockage_probability=0.5, sync_age=0.5, channel_degradation=0.5, traffic_density=0.5  # type: ignore[arg-type]  # noqa: E501
         )
     with pytest.raises(ValueError):
         est.compute_criticality_from_evidence(
-            relative_speed=0.5, blockage_probability="0.5", sync_age=0.5, channel_degradation=0.5, traffic_density=0.5  # type: ignore[arg-type]
+            relative_speed=0.5, blockage_probability="0.5", sync_age=0.5, channel_degradation=0.5, traffic_density=0.5  # type: ignore[arg-type]  # noqa: E501
         )
 
 
@@ -246,9 +274,17 @@ def test_estimate_does_not_use_unrelated_state_fields_as_silent_substitute():
 def test_compute_criticality_from_evidence_is_deterministic():
     est = CriticalityEstimator()
     r1 = est.compute_criticality_from_evidence(
-        relative_speed=0.3, blockage_probability=0.4, sync_age=0.2, channel_degradation=0.6, traffic_density=0.5
+        relative_speed=0.3,
+        blockage_probability=0.4,
+        sync_age=0.2,
+        channel_degradation=0.6,
+        traffic_density=0.5,
     )
     r2 = est.compute_criticality_from_evidence(
-        relative_speed=0.3, blockage_probability=0.4, sync_age=0.2, channel_degradation=0.6, traffic_density=0.5
+        relative_speed=0.3,
+        blockage_probability=0.4,
+        sync_age=0.2,
+        channel_degradation=0.6,
+        traffic_density=0.5,
     )
     assert r1 == r2

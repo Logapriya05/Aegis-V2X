@@ -116,14 +116,23 @@ class TAHSParams:
     horizon_discretization: tuple[int, ...]
 
     @classmethod
-    def from_model_config(cls) -> "TAHSParams":
+    def from_model_config(cls, profile: str | None = None) -> "TAHSParams":
+        """Default: the `tahs:` values. With `profile`, beta/gamma/delta come
+        from `tahs.profiles.<profile>` instead (e.g. "full_range", the
+        live-drive demo's coefficients); everything else is unchanged."""
         t = load_config("model")["tahs"]
+        coeffs = t
+        if profile is not None:
+            profiles = t.get("profiles", {})
+            if profile not in profiles:
+                raise KeyError(f"unknown TAHS profile {profile!r}; available: {sorted(profiles)}")
+            coeffs = profiles[profile]
         return cls(
             horizon_min=t["horizon_min"],
             horizon_max=t["horizon_max"],
-            beta=t["beta"],
-            gamma=t["gamma"],
-            delta=t["delta"],
+            beta=coeffs["beta"],
+            gamma=coeffs["gamma"],
+            delta=coeffs["delta"],
             horizon_discretization=tuple(t["horizon_discretization"]),
         )
 
@@ -167,6 +176,8 @@ class TAHS(BaseTAHS):
 
         sigmoid_arg = self._p.beta * trust - self._p.gamma * criticality + self._p.delta * authority
         sigmoid_val = 1.0 / (1.0 + math.exp(-sigmoid_arg))
-        continuous_h = self._p.horizon_min + (self._p.horizon_max - self._p.horizon_min) * sigmoid_val
+        continuous_h = (
+            self._p.horizon_min + (self._p.horizon_max - self._p.horizon_min) * sigmoid_val
+        )
 
         return min(self._p.horizon_discretization, key=lambda h: abs(h - continuous_h))

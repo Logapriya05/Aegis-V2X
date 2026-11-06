@@ -101,9 +101,7 @@ class TestAssembleFramePayload:
     def test_full_vehicle_data_assembles_correctly(
         self, frame_dir_with_full_vehicle, scene_id, vehicle_id
     ):
-        payload = assemble_frame_payload(
-            frame_dir_with_full_vehicle, "147", scene_id, vehicle_id
-        )
+        payload = assemble_frame_payload(frame_dir_with_full_vehicle, "147", scene_id, vehicle_id)
 
         assert payload is not None
         assert payload.scene_id == scene_id
@@ -124,12 +122,20 @@ class TestAssembleFramePayload:
         assert payload.lidar_path is not None
         assert payload.lidar_path.endswith("vehicle147_lidar.npz")
 
-    def test_missing_gps_falls_back_to_imu_frame_and_timestamp(self, tmp_path, scene_id, vehicle_id):
+    def test_missing_gps_falls_back_to_imu_frame_and_timestamp(
+        self, tmp_path, scene_id, vehicle_id
+    ):
         frame_dir = tmp_path / "frame_500000"
         frame_dir.mkdir()
         _write_json(
             frame_dir / "vehicle1_imu.json",
-            {"timestamp": 9.0, "frame": 500000, "accel": [0, 0, 9.8], "gyro": [0, 0, 0], "compass": 0.0},
+            {
+                "timestamp": 9.0,
+                "frame": 500000,
+                "accel": [0, 0, 9.8],
+                "gyro": [0, 0, 0],
+                "compass": 0.0,
+            },
         )
 
         payload = assemble_frame_payload(frame_dir, "1", scene_id, vehicle_id)
@@ -173,7 +179,13 @@ class TestAssembleScenePayloads:
             frame_dir.mkdir()
             _write_json(
                 frame_dir / "vehicle5_imu.json",
-                {"timestamp": ts, "frame": frame_idx, "accel": [0, 0, 9.8], "gyro": [0, 0, 0], "compass": 0.0},
+                {
+                    "timestamp": ts,
+                    "frame": frame_idx,
+                    "accel": [0, 0, 9.8],
+                    "gyro": [0, 0, 0],
+                    "compass": 0.0,
+                },
             )
 
         vehicle_id = uuid.uuid4()

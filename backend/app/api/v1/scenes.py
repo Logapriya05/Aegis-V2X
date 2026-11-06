@@ -16,7 +16,9 @@ router = APIRouter(prefix="/scenes", tags=["scenes"])
 
 
 @router.post(
-    "", response_model=SceneRead, status_code=status.HTTP_201_CREATED,
+    "",
+    response_model=SceneRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_scene(payload: SceneCreate, db: Session = Depends(get_db)) -> SceneRead:
@@ -26,9 +28,7 @@ def create_scene(payload: SceneCreate, db: Session = Depends(get_db)) -> SceneRe
 
 
 @router.get("", response_model=list[SceneRead])
-def list_scenes(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
-) -> list[SceneRead]:
+def list_scenes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) -> list[SceneRead]:
     """List scenes, most recently created first."""
     scenes = scene_crud.list_scenes(db, skip=skip, limit=limit)
     return [SceneRead.model_validate(s) for s in scenes]
@@ -44,7 +44,9 @@ def get_scene(scene_id: uuid.UUID, db: Session = Depends(get_db)) -> SceneRead:
 
 
 @router.post(
-    "/{scene_id}/vehicles", response_model=VehicleRead, status_code=status.HTTP_201_CREATED,
+    "/{scene_id}/vehicles",
+    response_model=VehicleRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def add_vehicle(

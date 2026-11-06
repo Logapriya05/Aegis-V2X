@@ -17,7 +17,9 @@ router = APIRouter(prefix="/experiments", tags=["experiments"])
 
 
 @router.post(
-    "", response_model=ExperimentRead, status_code=status.HTTP_201_CREATED,
+    "",
+    response_model=ExperimentRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_experiment(payload: ExperimentCreate, db: Session = Depends(get_db)) -> ExperimentRead:
@@ -51,7 +53,8 @@ def get_experiment(experiment_id: uuid.UUID, db: Session = Depends(get_db)) -> E
 
 
 @router.patch(
-    "/{experiment_id}", response_model=ExperimentRead,
+    "/{experiment_id}",
+    response_model=ExperimentRead,
     dependencies=[Depends(require_api_key)],
 )
 def update_experiment(

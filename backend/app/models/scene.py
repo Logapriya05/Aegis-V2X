@@ -34,9 +34,7 @@ class Scene(Base):
 
     __tablename__ = "scenes"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     scene_code: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
     map_name: Mapped[str] = mapped_column(String(64), nullable=False, default="Town05")
     weather_preset: Mapped[str] = mapped_column(String(64), nullable=False, default="ClearNoon")
@@ -71,9 +69,7 @@ class Vehicle(Base):
 
     __tablename__ = "vehicles"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     scene_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("scenes.id", ondelete="CASCADE"), nullable=False, index=True
     )

@@ -39,8 +39,12 @@ from ai.criticality.model import CriticalityEstimator
 from ai.gru.model import GRUPredictor
 from ai.perception.data_loader import Phase4DataLoader
 from ai.pointpillars.model import MissingPointCloudError, PointPillars
-from ai.trust_estimator.model import MissingTrustEvidenceError, TwinTrustEstimator, _reduce_uncertainty
-from ai.v2x_vit.model import MissingVehicleFeaturesError, V2XViT
+from ai.trust_estimator.model import (
+    MissingTrustEvidenceError,
+    TwinTrustEstimator,
+    _reduce_uncertainty,
+)
+from ai.v2x_vit.model import V2XViT
 from digital_twin.state import ChannelState, DigitalTwinState, EnvironmentalContext, MobilityState
 
 STRAIGHT_ROAD_SCENE_ID = "6b08be32-e041-4ab4-861c-99090df77ffb"
@@ -85,11 +89,13 @@ def test_real_data_loader_pointpillars_v2x_vit_pipeline():
         features.append(feat)
         included_vehicle_codes.append(s.vehicle_code)
 
-    assert len(included_vehicle_codes) >= 2, (
-        f"expected at least 2 valid real vehicles, got {len(included_vehicle_codes)}"
-    )
+    assert (
+        len(included_vehicle_codes) >= 2
+    ), f"expected at least 2 valid real vehicles, got {len(included_vehicle_codes)}"
     # The known-corrupt case must be excluded, never fabricated through.
-    assert "Vehicle192" in skipped_vehicle_codes or "Vehicle192" not in [s.vehicle_code for s in frame_group]
+    assert "Vehicle192" in skipped_vehicle_codes or "Vehicle192" not in [
+        s.vehicle_code for s in frame_group
+    ]
 
     for feat in features:
         assert feat.shape == (1, 128, 90, 180)
@@ -127,7 +133,9 @@ def test_real_pipeline_never_fabricates_missing_lidar():
 # =============================================================================
 
 
-def _synthetic_wireless_sequence(batch: int = 1, seq_len: int = 8, input_dim: int = 4, seed: int = 0) -> torch.Tensor:
+def _synthetic_wireless_sequence(
+    batch: int = 1, seq_len: int = 8, input_dim: int = 4, seed: int = 0
+) -> torch.Tensor:
     """SYNTHETIC (code-correctness only) -- stands in for a historical
     wireless/channel sequence. No real CSI/SNR/beam_index exists anywhere
     in the Phase 2 dataset (Phase 4 GRU audit), so this is never presented
@@ -164,10 +172,10 @@ def test_synthetic_gru_to_trust_contract():
     # DigitalTwinState (see Phase 4 Trust input-contract review) --
     # supplied explicitly here purely to validate the formula wiring.
     trust = trust_est.compute_trust_from_evidence(
-        prediction_error=0.15,          # SYNTHETIC fixture, not real
-        prediction_uncertainty=prediction.prediction_uncertainty,  # real GRU output (on synthetic input)
-        sync_age_penalty=0.05,          # SYNTHETIC fixture, not real
-        comm_quality=0.7,               # SYNTHETIC fixture, not real
+        prediction_error=0.15,  # SYNTHETIC fixture, not real
+        prediction_uncertainty=prediction.prediction_uncertainty,  # real GRU output (on synthetic input)  # noqa: E501
+        sync_age_penalty=0.05,  # SYNTHETIC fixture, not real
+        comm_quality=0.7,  # SYNTHETIC fixture, not real
     )
     assert isinstance(trust, float)
     assert 0.0 <= trust <= 1.0
@@ -230,7 +238,9 @@ def test_v2x_vit_output_is_not_accepted_as_gru_input():
     v2x = V2XViT()
     gru = GRUPredictor(input_dim=4, seed=0)
 
-    feat = torch.from_numpy(np.random.default_rng(0).normal(size=(1, 128, 90, 180)).astype(np.float32))
+    feat = torch.from_numpy(
+        np.random.default_rng(0).normal(size=(1, 128, 90, 180)).astype(np.float32)
+    )
     fused = v2x.fuse([feat])
     assert fused.shape == (1, 256)
 
@@ -252,8 +262,12 @@ def test_trust_estimate_from_state_still_raises_missing_evidence():
     state = DigitalTwinState(
         timestamp=10.0,
         channel=ChannelState(csi=None, snr=20.0, beam_index=3, path_loss=90.0),
-        mobility=MobilityState(position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0),
-        environment=EnvironmentalContext(weather="clear_day", traffic_density="sparse", blockage_probability=0.05),
+        mobility=MobilityState(
+            position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0
+        ),
+        environment=EnvironmentalContext(
+            weather="clear_day", traffic_density="sparse", blockage_probability=0.05
+        ),
         prediction_uncertainty=0.2,
         sync_age_seconds=0.05,
         metadata={},
@@ -271,8 +285,12 @@ def test_criticality_estimate_from_state_still_raises_missing_evidence():
     state = DigitalTwinState(
         timestamp=10.0,
         channel=ChannelState(csi=None, snr=20.0, beam_index=3, path_loss=90.0),
-        mobility=MobilityState(position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0),
-        environment=EnvironmentalContext(weather="clear_day", traffic_density="sparse", blockage_probability=0.05),
+        mobility=MobilityState(
+            position=(0.0, 0.0, 0.0), velocity=(15.0, 0.0, 0.0), heading=0.0, relative_speed=5.0
+        ),
+        environment=EnvironmentalContext(
+            weather="clear_day", traffic_density="sparse", blockage_probability=0.05
+        ),
         prediction_uncertainty=0.2,
         sync_age_seconds=0.05,
         metadata={},

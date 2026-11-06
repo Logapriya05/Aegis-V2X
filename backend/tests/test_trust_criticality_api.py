@@ -25,7 +25,11 @@ def test_create_trust_record(client: TestClient) -> None:
     body = response.json()
     assert 0.0 <= body["trust_probability"] <= 1.0
     assert body["interpretation"] in {
-        "very_unreliable", "unreliable", "moderate", "reliable", "highly_reliable"
+        "very_unreliable",
+        "unreliable",
+        "moderate",
+        "reliable",
+        "highly_reliable",
     }
 
     fetch = client.get(f"/api/v1/trust/frame/{frame_id}")

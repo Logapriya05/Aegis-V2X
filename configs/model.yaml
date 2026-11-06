@@ -18,6 +18,16 @@ trust_estimator:
     - [0.4, 0.6]   # moderate confidence
     - [0.6, 0.8]   # reliable
     - [0.8, 1.0]   # highly reliable
+  # Platt calibration T_cal = sigmoid(a * raw_score + b) on top of the unchanged
+  # estimator (ai/trust_estimator/calibration.py); uncalibrated = (1/tau, 0).
+  # FITTED ON THE LIVE-DRIVE BROWSER SIMULATION (Logapriya05/aegis-v2x-live-drive,
+  # research/pipeline/calibrate_trust.py), NOT on CARLA or real vehicles.
+  # Target: twin object within 1.0 m of the LiDAR-observed position on the next cycle.
+  # 8000 training / 3992 held-out cycles; held-out ECE 0.1288 -> 0.0419.
+  platt_calibration:
+    a: 3.303141462160305
+    b: 0.659756591983696
+    fitted_on: "live-drive simulation, 8 conditions, 2026-11-04"
 
 criticality_estimator:
   # C_t = sum(alpha_i * f_i), sum(alpha_i) = 1
@@ -36,11 +46,23 @@ tahs:
   beta: 1.0   # trust sensitivity
   gamma: 1.0  # criticality sensitivity
   delta: 1.0  # GDCA authority sensitivity -- PROVISIONAL/UNCALIBRATED architectural default (Phase 5 three-input extension), not optimized or empirically validated
+  # Profile used by the live-drive demo. beta = gamma = delta = 1 above can only
+  # reach horizons 3..8 (sigmoid argument stays in [-1, 2]); these values reach the
+  # full 1..10 range and keep the neutral point (T, C, A) = (0.5, 0.5, 0.5) at H = 5.
+  # Same formula, only the coefficients differ. Design choice, not optimized.
+  profiles:
+    full_range:
+      beta: 3.0
+      gamma: 5.0
+      delta: 2.0
 
 fsdp:
   trust_bins: ["low", "medium", "high"]
   criticality_bins: ["low", "medium", "high"]
   num_states: 9   # 3 x 3
+  # TableFSDP bins: value < edges[0] -> low, < edges[1] -> medium, else high
+  trust_bin_edges: [0.4, 0.6]          # match the calibration bands above
+  criticality_bin_edges: [0.3333333333333333, 0.6666666666666666]
   actions:
     - synchronize
     - predict
@@ -83,3 +105,34 @@ objective_function:
     sync_overhead: 0.20
     beam_failures: 0.20
     reliability: 0.15
+  # Constraint for generating the FSDP table (chosen 2026-11-04): minimise J only among
+  # policies whose twin correctness (the R term) is at least the fixed baseline's
+  # (horizon 5, edge synchronisation every 1 s) in closed-loop evaluation. Without it,
+  # minimising J alone chose to synchronise far less and let twin correctness fall from
+  # 57% to 46% (live-drive simulation), i.e. it traded accuracy for resources.
+  constraints:
+    twin_correctness_at_least_fixed_baseline: true
+    fixed_baseline:
+      horizon: 5
+      sync_period_s: 1.0
+
+twintrust_ap:
+  # Evidence normalisation (ai/twintrust_ap/evidence.py): raw value / reference, clipped
+  # to [0, 1]. Values used by the live-drive demo; design choices, not fitted.
+  evidence:
+    error_ref_m: 3.0
+    age_ref_s: 1.0
+    latency_ref_ms: 300.0
+    relative_speed_ref_mps: 20.0
+    density_ref: 20.0
+    correct_within_m: 1.0
+  # mmWave beam model used by the live-drive demo for V2V links (design choices for an
+  # FR2 24-52 GHz link, not measured): a link is misaligned when the bearing to the other
+  # vehicle has drifted more than half the beamwidth from the bearing at the last beam
+  # sweep; misaligned links add up to max_extra_loss packet loss and count as blocked in
+  # the criticality blockage feature. A beam_switch action re-sweeps all links
+  # (outage sweep_s). The fixed baseline sweeps every 1 s together with its sync.
+  beam:
+    beamwidth_deg: 12.0
+    max_extra_loss: 0.7
+    sweep_s: 0.02

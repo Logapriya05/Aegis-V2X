@@ -95,8 +95,10 @@ def _synthetic_channel_state(rng: random.Random, distance_to_center: float) -> d
     path_loss_db = 40.0 + 20.0 * math.log10(max(distance_to_center, 1.0))
     snr_db = max(0.0, 35.0 - path_loss_db * 0.3 + rng.uniform(-2.0, 2.0))
     rssi_dbm = -30.0 - path_loss_db * 0.4 + rng.uniform(-2.0, 2.0)
-    csi = {"amplitude": [round(rng.uniform(0.1, 1.0), 4) for _ in range(8)],
-           "phase": [round(rng.uniform(-math.pi, math.pi), 4) for _ in range(8)]}
+    csi = {
+        "amplitude": [round(rng.uniform(0.1, 1.0), 4) for _ in range(8)],
+        "phase": [round(rng.uniform(-math.pi, math.pi), 4) for _ in range(8)],
+    }
     beam_index = rng.randint(0, 63)
     return {
         "csi": csi,
@@ -107,9 +109,7 @@ def _synthetic_channel_state(rng: random.Random, distance_to_center: float) -> d
     }
 
 
-def generate_synthetic_scene(
-    db: Session, payload: SyntheticSceneRequest
-) -> SyntheticSceneResponse:
+def generate_synthetic_scene(db: Session, payload: SyntheticSceneRequest) -> SyntheticSceneResponse:
     """Generate a full synthetic scene end-to-end and persist it via the real CRUD layer.
 
     For each of `num_vehicles` vehicles, generates `num_frames` frames of
@@ -138,6 +138,8 @@ def generate_synthetic_scene(
             scene.id,
             VehicleCreate(vehicle_code=f"Vehicle{i:02d}", vehicle_type="car", is_ego=(i == 0)),
         )
+        if vehicle is None:  # add_vehicle returns None only if the scene row is missing
+            raise RuntimeError(f"scene {scene.id} disappeared while adding Vehicle{i:02d}")
         vehicles.append(vehicle)
 
     frames_created = trust_created = criticality_created = decisions_created = 0
@@ -235,6 +237,8 @@ def generate_synthetic_scene(
             # --- Decision (Phase 3 placeholder heuristic; Phase 5 replaces the policy_source) ---
             trust_record = trust_crud.get_trust_record_by_frame(db, frame.id)
             criticality_record = criticality_crud.get_criticality_record_by_frame(db, frame.id)
+            if trust_record is None or criticality_record is None:  # both were created just above
+                raise RuntimeError(f"trust/criticality record missing for frame {frame.id}")
             horizon = _heuristic_horizon(trust_record.trust_probability)
             action = _heuristic_action(
                 trust_record.trust_probability, criticality_record.criticality_score

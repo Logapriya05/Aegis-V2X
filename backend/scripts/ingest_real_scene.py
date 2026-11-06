@@ -30,6 +30,7 @@ What this does, step by step:
 
 from __future__ import annotations
 
+import uuid
 from pathlib import Path
 
 from app.core.database import SessionLocal
@@ -45,9 +46,7 @@ from app.services.carla_ingestion import assemble_scene_payloads, discover_vehic
 # (10+ minutes with barely any CPU progress). Copy the scene locally first
 # with robocopy, then point this at the local copy.
 # ---------------------------------------------------------------------------
-SCENE_DIR = Path(
-    r"C:\AegisTemp\roundabout_scene00_FULL\roundabout_sparse_night_Scene00"
-)
+SCENE_DIR = Path(r"C:\AegisTemp\roundabout_scene00_FULL\roundabout_sparse_night_Scene00")
 SCENE_CODE = "roundabout_sparse_night_Scene00"
 MAP_NAME = "Town04"  # adjust if you know the actual CARLA map used
 # ---------------------------------------------------------------------------
@@ -82,8 +81,10 @@ def main() -> None:
         # AFTER create_scene(), leaving num_vehicles_target hardcoded at
         # 0 regardless of how many vehicles the scene actually had.)
         vehicle_id_strs = discover_all_vehicle_ids(SCENE_DIR)
-        print(f"Discovered {len(vehicle_id_strs)} distinct vehicles: {vehicle_id_strs[:10]}"
-              f"{'...' if len(vehicle_id_strs) > 10 else ''}")
+        print(
+            f"Discovered {len(vehicle_id_strs)} distinct vehicles: {vehicle_id_strs[:10]}"
+            f"{'...' if len(vehicle_id_strs) > 10 else ''}"
+        )
 
         # Step 2: create the Scene row, now with the real vehicle count.
         print(f"Creating scene '{SCENE_CODE}'...")
@@ -104,13 +105,15 @@ def main() -> None:
         print(f"  Created scene id={scene.id}")
 
         # Step 3: create Vehicle rows.
-        vehicle_id_map: dict[str, object] = {}
+        vehicle_id_map: dict[str, uuid.UUID] = {}
         for vid_str in vehicle_id_strs:
             vehicle = add_vehicle(
                 db,
                 scene.id,
                 VehicleCreate(vehicle_code=f"Vehicle{vid_str}", vehicle_type="car", is_ego=False),
             )
+            if vehicle is None:  # add_vehicle returns None only if the scene row is missing
+                raise RuntimeError(f"scene {scene.id} disappeared while adding Vehicle{vid_str}")
             vehicle_id_map[vid_str] = vehicle.id
         print(f"  Created {len(vehicle_id_map)} vehicle rows.")
 
@@ -127,17 +130,21 @@ def main() -> None:
             inserted_frames = create_frames_bulk(db, batch)
             total_inserted += len(inserted_frames)
             total_unsynced += sum(1 for f in inserted_frames if not f.is_sync_valid)
-            print(f"  Inserted batch: {start}-{start + len(batch)} "
-                  f"({total_inserted}/{len(payloads)} total so far)")
+            print(
+                f"  Inserted batch: {start}-{start + len(batch)} "
+                f"({total_inserted}/{len(payloads)} total so far)"
+            )
 
         print()
         print("Done.")
         print(f"  Scene id: {scene.id}")
         print(f"  Vehicles created: {len(vehicle_id_map)}")
         print(f"  Frames inserted: {total_inserted}")
-        print(f"  Frames flagged out-of-sync: {total_unsynced} "
-              f"(expected: 0, since source=carla_only sets wireless_timestamp"
-              f" == simulation_timestamp)")
+        print(
+            f"  Frames flagged out-of-sync: {total_unsynced} "
+            f"(expected: 0, since source=carla_only sets wireless_timestamp"
+            f" == simulation_timestamp)"
+        )
     finally:
         db.close()
 

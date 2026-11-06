@@ -39,7 +39,9 @@ def _make_pointpillars() -> PointPillars:
 def _synthetic_points_in_range(n: int = 500, seed: int = 0) -> np.ndarray:
     """Points uniformly sampled inside the configured point_cloud_range."""
     rng = np.random.default_rng(seed)
-    xmin, ymin, zmin, xmax, ymax, zmax = TEST_CONFIG["perception"]["pointpillars"]["point_cloud_range"]
+    xmin, ymin, zmin, xmax, ymax, zmax = TEST_CONFIG["perception"]["pointpillars"][
+        "point_cloud_range"
+    ]
     xyz = rng.uniform([xmin, ymin, zmin], [xmax, ymax, zmax], size=(n, 3)).astype(np.float32)
     intensity = rng.uniform(0.0, 1.0, size=(n, 1)).astype(np.float32)
     return np.concatenate([xyz, intensity], axis=1)

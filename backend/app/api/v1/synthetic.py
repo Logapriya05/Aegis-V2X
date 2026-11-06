@@ -20,7 +20,9 @@ router = APIRouter(prefix="/synthetic", tags=["synthetic"])
 
 
 @router.post(
-    "/scenes", response_model=SyntheticSceneResponse, status_code=status.HTTP_201_CREATED,
+    "/scenes",
+    response_model=SyntheticSceneResponse,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_synthetic_scene(

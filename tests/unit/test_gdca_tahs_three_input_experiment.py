@@ -19,8 +19,6 @@ from __future__ import annotations
 
 import math
 
-import pytest
-
 from ai.twintrust_ap.gdca_tahs_trust_criticality_authority_experiment import (
     AUTHORITY_SOURCE_LABEL,
     CRITICALITY_SOURCE_LABEL,
@@ -86,7 +84,9 @@ def test_produces_one_row_per_authority_trust_criticality_combination():
     rows = run_gdca_tahs_three_input_experiment(
         authority_sequence, CONTROLLED_TRUST_VALUES, CONTROLLED_CRITICALITY_VALUES
     )
-    assert len(rows) == len(authority_sequence) * len(CONTROLLED_TRUST_VALUES) * len(CONTROLLED_CRITICALITY_VALUES)
+    assert len(rows) == len(authority_sequence) * len(CONTROLLED_TRUST_VALUES) * len(
+        CONTROLLED_CRITICALITY_VALUES
+    )
 
 
 def test_horizon_is_always_from_the_discrete_set():
@@ -175,7 +175,9 @@ def test_higher_trust_never_produces_a_shorter_horizon_for_fixed_criticality_and
     trusts_ascending = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
     for criticality in CONTROLLED_CRITICALITY_VALUES:
         for authority in (0.0, 0.5, 1.0):
-            rows = run_gdca_tahs_three_input_experiment([(0, authority)], trusts_ascending, [criticality])
+            rows = run_gdca_tahs_three_input_experiment(
+                [(0, authority)], trusts_ascending, [criticality]
+            )
             horizons = [row.horizon for row in rows]
             for h_prev, h_next in zip(horizons, horizons[1:]):
                 assert h_next >= h_prev, (
@@ -188,7 +190,9 @@ def test_higher_criticality_never_produces_a_longer_horizon_for_fixed_trust_and_
     criticalities_ascending = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
     for trust in CONTROLLED_TRUST_VALUES:
         for authority in (0.0, 0.5, 1.0):
-            rows = run_gdca_tahs_three_input_experiment([(0, authority)], [trust], criticalities_ascending)
+            rows = run_gdca_tahs_three_input_experiment(
+                [(0, authority)], [trust], criticalities_ascending
+            )
             horizons = [row.horizon for row in rows]
             for h_prev, h_next in zip(horizons, horizons[1:]):
                 assert h_next <= h_prev, (
@@ -197,7 +201,7 @@ def test_higher_criticality_never_produces_a_longer_horizon_for_fixed_trust_and_
                 )
 
 
-def test_real_shaped_sequence_high_authority_period_yields_longer_or_equal_horizons_than_low_authority_period():
+def test_real_shaped_sequence_high_authority_period_yields_longer_or_equal_horizons_than_low_authority_period():  # noqa: E501
     """Same stationary-then-moving synthetic shape as the substitution
     experiment's own equivalent test, run through the three-input path at
     fixed controlled trust/criticality."""

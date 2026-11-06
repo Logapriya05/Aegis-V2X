@@ -23,7 +23,9 @@ router = APIRouter(prefix="/decisions", tags=["decisions"])
 
 
 @router.post(
-    "", response_model=DecisionRead, status_code=status.HTTP_201_CREATED,
+    "",
+    response_model=DecisionRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_decision(payload: DecisionCreate, db: Session = Depends(get_db)) -> DecisionRead:

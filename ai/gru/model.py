@@ -207,7 +207,7 @@ class GRUPredictor(BaseGRUPredictor):
             )
         if feat_dim != self.input_dim:
             raise InvalidSequenceError(
-                f"historical_sequence's last dim is {feat_dim}; expected input_dim={self.input_dim} "
+                f"historical_sequence's last dim is {feat_dim}; expected input_dim={self.input_dim} "  # noqa: E501
                 f"(configured input_features: {self.input_features})"
             )
         if not torch.isfinite(historical_sequence).all():

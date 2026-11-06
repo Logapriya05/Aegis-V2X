@@ -237,7 +237,11 @@ def test_custom_delta_changes_authority_sensitivity():
     ignored) -- delta=0.0 makes authority contribute nothing, matching
     the plain two-input result regardless of the authority value passed."""
     zero_delta_params = TAHSParams(
-        horizon_min=1, horizon_max=10, beta=1.0, gamma=1.0, delta=0.0,
+        horizon_min=1,
+        horizon_max=10,
+        beta=1.0,
+        gamma=1.0,
+        delta=0.0,
         horizon_discretization=(1, 2, 3, 5, 8, 10),
     )
     tahs = TAHS(zero_delta_params)

@@ -224,7 +224,12 @@ class Phase4DataLoader:
         while True:
             resp = requests.get(
                 url,
-                params={"scene_id": scene_id, "vehicle_id": vehicle_id, "skip": skip, "limit": page_size},
+                params={
+                    "scene_id": scene_id,
+                    "vehicle_id": vehicle_id,
+                    "skip": skip,
+                    "limit": page_size,
+                },
                 timeout=self.timeout_s,
             )
             resp.raise_for_status()
@@ -277,4 +282,6 @@ if __name__ == "__main__":
         with_lidar = sum(1 for s in samples if s.lidar_points is not None)
         print(f"  {len(samples)} vehicle samples, {with_lidar} with real loaded LiDAR points")
         if samples and samples[0].lidar_points is not None:
-            print(f"  Example: {samples[0].vehicle_code} has {samples[0].lidar_points.shape[0]} real points")
+            print(
+                f"  Example: {samples[0].vehicle_code} has {samples[0].lidar_points.shape[0]} real points"  # noqa: E501
+            )

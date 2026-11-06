@@ -96,7 +96,7 @@ def compute_real_authority_sequence(
         norms.append(n)
         if len(norms) < 2:
             continue
-        recent_window = norms[max(0, len(norms) - window):]
+        recent_window = norms[max(0, len(norms) - window) :]
         spread = robust_spread(recent_window)
         authority = compute_authority_from_evidence(n, spread)
         results.append((frame_index, authority))

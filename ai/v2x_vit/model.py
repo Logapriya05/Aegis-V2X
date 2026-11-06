@@ -141,7 +141,9 @@ class V2XViT(BaseV2XViT):
                 )
 
         with torch.no_grad():
-            embeddings = [self.vehicle_encoder(feat) for feat in per_vehicle_features]  # N x (1, embed_dim)
+            embeddings = [
+                self.vehicle_encoder(feat) for feat in per_vehicle_features
+            ]  # N x (1, embed_dim)
             sequence = torch.cat(embeddings, dim=0).unsqueeze(0)  # (1, N, embed_dim)
             attended = self.transformer(sequence)  # (1, N, embed_dim)
             fused = attended.mean(dim=1)  # (1, embed_dim)

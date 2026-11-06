@@ -91,7 +91,9 @@ def test_empty_input_raises_missing_vehicle_features_error():
 def test_invalid_tensor_shape_is_rejected_clearly():
     model = _make_v2x_vit()
     with pytest.raises(MissingVehicleFeaturesError):
-        model.fuse([torch.zeros(1, IN_CHANNELS, 6, 5), torch.zeros(2, IN_CHANNELS, 6, 5)])  # bad batch dim
+        model.fuse(
+            [torch.zeros(1, IN_CHANNELS, 6, 5), torch.zeros(2, IN_CHANNELS, 6, 5)]
+        )  # bad batch dim
     with pytest.raises(MissingVehicleFeaturesError):
         model.fuse([torch.zeros(1, IN_CHANNELS + 1, 6, 5)])  # wrong channel count
     with pytest.raises(MissingVehicleFeaturesError):

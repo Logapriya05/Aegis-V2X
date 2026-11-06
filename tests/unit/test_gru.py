@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import torch
 
-from ai.gru.model import GRUPredictor, GRUPrediction, InvalidSequenceError, VALID_HORIZONS
+from ai.gru.model import VALID_HORIZONS, GRUPrediction, GRUPredictor, InvalidSequenceError
 
 TEST_CONFIG = {
     "perception": {

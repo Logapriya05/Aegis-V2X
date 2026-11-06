@@ -424,9 +424,17 @@ def compute_authority_from_evidence(residual_norm: float, uncertainty: float) ->
     ValueError
         If either input is non-finite or negative.
     """
-    if not isinstance(residual_norm, (int, float)) or isinstance(residual_norm, bool) or not math.isfinite(residual_norm):
+    if (
+        not isinstance(residual_norm, (int, float))
+        or isinstance(residual_norm, bool)
+        or not math.isfinite(residual_norm)
+    ):
         raise ValueError(f"residual_norm must be a finite number, got {residual_norm!r}")
-    if not isinstance(uncertainty, (int, float)) or isinstance(uncertainty, bool) or not math.isfinite(uncertainty):
+    if (
+        not isinstance(uncertainty, (int, float))
+        or isinstance(uncertainty, bool)
+        or not math.isfinite(uncertainty)
+    ):
         raise ValueError(f"uncertainty must be a finite number, got {uncertainty!r}")
     if residual_norm < 0:
         raise ValueError(f"residual_norm must be >= 0 (it is a norm), got {residual_norm!r}")

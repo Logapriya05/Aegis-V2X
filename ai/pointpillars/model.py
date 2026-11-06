@@ -88,16 +88,21 @@ def _pillarize(
     vx, vy, _vz = voxel_size
 
     in_range = (
-        (points[:, 0] >= xmin) & (points[:, 0] < xmax)
-        & (points[:, 1] >= ymin) & (points[:, 1] < ymax)
-        & (points[:, 2] >= zmin) & (points[:, 2] < zmax)
+        (points[:, 0] >= xmin)
+        & (points[:, 0] < xmax)
+        & (points[:, 1] >= ymin)
+        & (points[:, 1] < ymax)
+        & (points[:, 2] >= zmin)
+        & (points[:, 2] < zmax)
     )
     pts = points[in_range]
 
     n_cols = int(round((xmax - xmin) / vx))
     n_rows = int(round((ymax - ymin) / vy))
 
-    pillar_features = np.zeros((max_pillars, max_points_per_pillar, AUGMENTED_POINT_DIM), dtype=np.float32)
+    pillar_features = np.zeros(
+        (max_pillars, max_points_per_pillar, AUGMENTED_POINT_DIM), dtype=np.float32
+    )
     pillar_mask = np.zeros((max_pillars, max_points_per_pillar), dtype=np.float32)
     pillar_coords = np.full((max_pillars, 2), -1, dtype=np.int64)
 
@@ -218,7 +223,9 @@ class PointPillars(BasePointPillars):
         seed: int = 0,
     ):
         cfg = (config or load_config("model"))["perception"]["pointpillars"]
-        self.point_cloud_range: tuple[float, float, float, float, float, float] = tuple(cfg["point_cloud_range"])
+        self.point_cloud_range: tuple[float, float, float, float, float, float] = tuple(
+            cfg["point_cloud_range"]
+        )
         self.voxel_size: tuple[float, float, float] = tuple(cfg["voxel_size"])
         self.max_points_per_pillar = max_points_per_pillar
         self.max_pillars = max_pillars
@@ -257,7 +264,9 @@ class PointPillars(BasePointPillars):
         if not np.all(np.isfinite(points)):
             raise MissingPointCloudError("point cloud contains non-finite (NaN/Inf) values")
         if points.shape[1] == 3:
-            points = np.concatenate([points, np.zeros((points.shape[0], 1), dtype=points.dtype)], axis=1)
+            points = np.concatenate(
+                [points, np.zeros((points.shape[0], 1), dtype=points.dtype)], axis=1
+            )
 
         pillar_features_np, pillar_mask_np, pillar_coords = _pillarize(
             points.astype(np.float32),

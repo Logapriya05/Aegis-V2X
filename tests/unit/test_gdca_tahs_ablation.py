@@ -20,10 +20,6 @@ this file -- no real Trust or Criticality evidence is fabricated.
 
 from __future__ import annotations
 
-import math
-
-import pytest
-
 from ai.twintrust_ap.gdca_tahs_ablation import (
     CONTROL_ARM_LABEL,
     GDCA_ARM_LABEL,

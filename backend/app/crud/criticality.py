@@ -35,9 +35,7 @@ def compute_criticality_score(
     )
 
 
-def create_criticality_record(
-    db: Session, payload: CriticalityRecordCreate
-) -> CriticalityRecord:
+def create_criticality_record(db: Session, payload: CriticalityRecordCreate) -> CriticalityRecord:
     """Compute and persist a criticality record for a frame."""
     criticality_score = compute_criticality_score(
         relative_speed_score=payload.relative_speed_score,
@@ -68,9 +66,7 @@ def get_criticality_record(db: Session, record_id: uuid.UUID) -> CriticalityReco
     return db.get(CriticalityRecord, record_id)
 
 
-def get_criticality_record_by_frame(
-    db: Session, frame_id: uuid.UUID
-) -> CriticalityRecord | None:
+def get_criticality_record_by_frame(db: Session, frame_id: uuid.UUID) -> CriticalityRecord | None:
     """Fetch the criticality record belonging to a given frame (1:1)."""
     stmt = select(CriticalityRecord).where(CriticalityRecord.frame_id == frame_id)
     return db.execute(stmt).scalar_one_or_none()

@@ -24,6 +24,10 @@ python_version = "3.10"
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
+# backend/alembic/ is Alembic's generated/templated code (same reason isort skips it above).
+# Run as part of `mypy backend`, that directory shadows the installed `alembic` package and
+# mypy reports "Module 'alembic' has no attribute 'op'/'context'" for code that runs correctly.
+exclude = ["^backend/alembic/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

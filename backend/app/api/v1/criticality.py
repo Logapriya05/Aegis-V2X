@@ -18,7 +18,9 @@ router = APIRouter(prefix="/criticality", tags=["criticality"])
 
 
 @router.post(
-    "", response_model=CriticalityRecordRead, status_code=status.HTTP_201_CREATED,
+    "",
+    response_model=CriticalityRecordRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_criticality_record(

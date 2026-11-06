@@ -18,7 +18,9 @@ router = APIRouter(prefix="/trust", tags=["trust"])
 
 
 @router.post(
-    "", response_model=TrustRecordRead, status_code=status.HTTP_201_CREATED,
+    "",
+    response_model=TrustRecordRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_trust_record(

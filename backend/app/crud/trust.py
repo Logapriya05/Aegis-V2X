@@ -68,8 +68,11 @@ def compute_trust_probability(
         A tuple of (S_t, T_t, interpretation_label).
     """
     w1, w2, w3, w4 = weights
-    raw_score = (w4 * comm_quality) - (w1 * prediction_error) - (w2 * prediction_uncertainty) - (
-        w3 * sync_age_penalty
+    raw_score = (
+        (w4 * comm_quality)
+        - (w1 * prediction_error)
+        - (w2 * prediction_uncertainty)
+        - (w3 * sync_age_penalty)
     )
     trust_probability = 1.0 / (1.0 + math.exp(-raw_score / tau))
     interpretation = _interpret(trust_probability)

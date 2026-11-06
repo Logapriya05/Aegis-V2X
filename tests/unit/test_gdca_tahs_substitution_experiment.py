@@ -21,7 +21,6 @@ import math
 
 import pytest
 
-from ai.twintrust_ap.gdca import compute_authority_from_evidence
 from ai.twintrust_ap.gdca_tahs_experiment import (
     SubstitutionExperimentRow,
     compute_real_authority_sequence,
@@ -184,7 +183,7 @@ def test_higher_criticality_never_produces_a_longer_horizon_for_fixed_authority(
             )
 
 
-def test_real_shaped_sequence_high_authority_period_yields_longer_or_equal_horizons_than_low_authority_period():
+def test_real_shaped_sequence_high_authority_period_yields_longer_or_equal_horizons_than_low_authority_period():  # noqa: E501
     """Uses the same stationary-then-moving synthetic shape as the
     authority-sequence tests above, run through TAHS at a fixed
     criticality, to confirm the stationary (high-authority) phase yields

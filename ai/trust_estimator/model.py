@@ -221,6 +221,36 @@ class TwinTrustEstimator(BaseTrustEstimator):
         tensor, or a multi-element tensor (see `_reduce_uncertainty` for
         the documented deterministic reduction).
         """
+        raw_score = self.compute_raw_score_from_evidence(
+            prediction_error, prediction_uncertainty, sync_age_penalty, comm_quality
+        )
+        trust_probability = 1.0 / (1.0 + math.exp(-raw_score / self.tau))
+
+        if not (0.0 <= trust_probability <= 1.0):
+            raise ValueError(
+                f"computed trust_probability {trust_probability!r} outside [0, 1] "
+                "-- calibration invariant violation"
+            )
+        return trust_probability
+
+    def compute_raw_score_from_evidence(
+        self,
+        prediction_error: float,
+        prediction_uncertainty: Any,
+        sync_age_penalty: float,
+        comm_quality: float,
+    ) -> float:
+        """The weighted evidence score before the sigmoid:
+
+            raw_score = w4*comm_quality - w1*prediction_error
+                        - w2*prediction_uncertainty - w3*sync_age_penalty
+
+        `compute_trust_from_evidence` returns sigmoid(raw_score / tau). The
+        score is exposed separately so a fitted calibration
+        (`ai/trust_estimator/calibration.py`) can map it to a probability
+        without changing this estimator. Same input validation as
+        `compute_trust_from_evidence`.
+        """
         if not _is_finite_number(prediction_error):
             raise ValueError(f"prediction_error must be a finite number, got {prediction_error!r}")
         if not _is_finite_number(comm_quality):
@@ -231,20 +261,12 @@ class TwinTrustEstimator(BaseTrustEstimator):
         reduced_uncertainty = _reduce_uncertainty(prediction_uncertainty)
 
         w1, w2, w3, w4 = self.weights
-        raw_score = (
+        return (
             w4 * comm_quality
             - w1 * prediction_error
             - w2 * reduced_uncertainty
             - w3 * sync_age_penalty
         )
-        trust_probability = 1.0 / (1.0 + math.exp(-raw_score / self.tau))
-
-        if not (0.0 <= trust_probability <= 1.0):
-            raise ValueError(
-                f"computed trust_probability {trust_probability!r} outside [0, 1] "
-                "-- calibration invariant violation"
-            )
-        return trust_probability
 
     def calibration_error(self, predictions: list[float], outcomes: list[bool]) -> float:
         """Expected Calibration Error (ECE) over `DEFAULT_ECE_BINS` equal-

@@ -16,9 +16,14 @@ import pytest
 
 mi = pytest.importorskip("mitsuba", reason="mitsuba not installed in this environment")
 mi.set_variant("llvm_ad_mono_polarized")  # must precede `import sionna.rt`
-sionna_rt = pytest.importorskip("sionna.rt", reason="sionna (Sionna RT) not installed in this environment")
+sionna_rt = pytest.importorskip(
+    "sionna.rt", reason="sionna (Sionna RT) not installed in this environment"
+)
 
-from simulation.sionna_configs.channel_simulator import DEFAULT_RADIO_PARAMS, ChannelSimulator  # noqa: E402
+from simulation.sionna_configs.channel_simulator import (  # noqa: E402
+    DEFAULT_RADIO_PARAMS,
+    ChannelSimulator,
+)
 from simulation.sionna_configs.wireless_dataset_generator import (  # noqa: E402
     CheckpointManifest,
     SampleOutcome,
@@ -27,13 +32,28 @@ from simulation.sionna_configs.wireless_dataset_generator import (  # noqa: E402
 )
 
 _CUBE_VERTICES = [
-    (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
-    (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1),
+    (-1, -1, -1),
+    (1, -1, -1),
+    (1, 1, -1),
+    (-1, 1, -1),
+    (-1, -1, 1),
+    (1, -1, 1),
+    (1, 1, 1),
+    (-1, 1, 1),
 ]
 _CUBE_FACES = [
-    (0, 1, 2), (0, 2, 3), (4, 5, 6), (4, 6, 7),
-    (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5),
-    (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7),
+    (0, 1, 2),
+    (0, 2, 3),
+    (4, 5, 6),
+    (4, 6, 7),
+    (0, 1, 5),
+    (0, 5, 4),
+    (1, 2, 6),
+    (1, 6, 5),
+    (2, 3, 7),
+    (2, 7, 6),
+    (3, 0, 4),
+    (3, 4, 7),
 ]
 
 
@@ -71,8 +91,11 @@ def simulator():
 
 def _clear_spec(sample_id="s0", frame=0):
     return SampleSpec(
-        sample_id=sample_id, frame=frame, wireless_timestamp=0.0,
-        rsu_positions={0: (20.0, 5.0, 2.0)}, vehicle_positions={0: (-20.0, 5.0, 1.5)},
+        sample_id=sample_id,
+        frame=frame,
+        wireless_timestamp=0.0,
+        rsu_positions={0: (20.0, 5.0, 2.0)},
+        vehicle_positions={0: (-20.0, 5.0, 1.5)},
         condition_label="los_test",
     )
 
@@ -80,6 +103,7 @@ def _clear_spec(sample_id="s0", frame=0):
 # --------------------------------------------------------------------------
 # CheckpointManifest
 # --------------------------------------------------------------------------
+
 
 def test_checkpoint_manifest_starts_empty(tmp_path):
     manifest = CheckpointManifest(tmp_path / "checkpoint.json")
@@ -112,6 +136,7 @@ def test_checkpoint_manifest_write_is_valid_json_every_time(tmp_path):
 # parallel reimplementation)
 # --------------------------------------------------------------------------
 
+
 def test_generate_produces_expected_output_files(scene_with_cube, simulator, tmp_path):
     gen = WirelessDatasetGenerator(scene_with_cube, simulator, output_dir=tmp_path / "out")
     outcomes = gen.generate([_clear_spec("s0")])
@@ -127,8 +152,12 @@ def test_generate_produces_expected_output_files(scene_with_cube, simulator, tmp
 
     with np.load(npz_files[0]) as data:
         csi = data["csi"]
-        num_rx_ant = DEFAULT_RADIO_PARAMS["rx_array"]["rows"] * DEFAULT_RADIO_PARAMS["rx_array"]["cols"]
-        num_tx_ant = DEFAULT_RADIO_PARAMS["tx_array"]["rows"] * DEFAULT_RADIO_PARAMS["tx_array"]["cols"]
+        num_rx_ant = (
+            DEFAULT_RADIO_PARAMS["rx_array"]["rows"] * DEFAULT_RADIO_PARAMS["rx_array"]["cols"]
+        )
+        num_tx_ant = (
+            DEFAULT_RADIO_PARAMS["tx_array"]["rows"] * DEFAULT_RADIO_PARAMS["tx_array"]["cols"]
+        )
         num_sc = DEFAULT_RADIO_PARAMS["num_subcarriers"]
         assert csi.shape == (num_rx_ant, num_tx_ant, num_sc)
 
@@ -171,8 +200,13 @@ def test_generate_records_failure_without_crashing_the_run(scene_with_cube, tmp_
         def simulate_frame(self, *args, **kwargs):
             raise RuntimeError("synthetic induced failure")
 
-    gen = WirelessDatasetGenerator(scene_with_cube, _AlwaysFailsSimulator(), output_dir=tmp_path / "out",
-                                    max_retries=1, retry_backoff_s=0.0)
+    gen = WirelessDatasetGenerator(
+        scene_with_cube,
+        _AlwaysFailsSimulator(),
+        output_dir=tmp_path / "out",
+        max_retries=1,
+        retry_backoff_s=0.0,
+    )
     outcomes = gen.generate([_clear_spec("s0"), _clear_spec("s1", frame=1)])
     assert len(outcomes) == 2
     assert all(o.status == "failed" for o in outcomes)
@@ -183,8 +217,14 @@ def test_generate_records_failure_without_crashing_the_run(scene_with_cube, tmp_
 
 
 def test_generate_no_links_is_recorded_not_silently_dropped(scene_with_cube, simulator, tmp_path):
-    spec = SampleSpec(sample_id="empty", frame=0, wireless_timestamp=0.0,
-                       rsu_positions={}, vehicle_positions={}, condition_label="degenerate")
+    spec = SampleSpec(
+        sample_id="empty",
+        frame=0,
+        wireless_timestamp=0.0,
+        rsu_positions={},
+        vehicle_positions={},
+        condition_label="degenerate",
+    )
     gen = WirelessDatasetGenerator(scene_with_cube, simulator, output_dir=tmp_path / "out")
     outcomes = gen.generate([spec])
     assert len(outcomes) == 1

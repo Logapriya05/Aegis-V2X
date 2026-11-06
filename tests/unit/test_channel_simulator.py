@@ -29,25 +29,42 @@ import pytest
 mi = pytest.importorskip("mitsuba", reason="mitsuba not installed in this environment")
 mi.set_variant("llvm_ad_mono_polarized")  # must precede `import sionna.rt` (variant-dependent
 # class registration binds at sionna.rt import time)
-sionna_rt = pytest.importorskip("sionna.rt", reason="sionna (Sionna RT) not installed in this environment")
+sionna_rt = pytest.importorskip(
+    "sionna.rt", reason="sionna (Sionna RT) not installed in this environment"
+)
 
 from simulation.sionna_configs.channel_simulator import (  # noqa: E402
+    _LOS_DELAY_TOLERANCE_S,
     DEFAULT_RADIO_PARAMS,
     ChannelSimulator,
     _classify_los,
-    _LOS_DELAY_TOLERANCE_S,
 )
 
 _C = 299_792_458.0
 
 _CUBE_VERTICES = [
-    (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
-    (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1),
+    (-1, -1, -1),
+    (1, -1, -1),
+    (1, 1, -1),
+    (-1, 1, -1),
+    (-1, -1, 1),
+    (1, -1, 1),
+    (1, 1, 1),
+    (-1, 1, 1),
 ]
 _CUBE_FACES = [
-    (0, 1, 2), (0, 2, 3), (4, 5, 6), (4, 6, 7),
-    (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5),
-    (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7),
+    (0, 1, 2),
+    (0, 2, 3),
+    (4, 5, 6),
+    (4, 6, 7),
+    (0, 1, 5),
+    (0, 5, 4),
+    (1, 2, 6),
+    (1, 6, 5),
+    (2, 3, 7),
+    (2, 7, 6),
+    (3, 0, 4),
+    (3, 4, 7),
 ]
 
 
@@ -122,8 +139,9 @@ def test_simulate_frame_executes_and_produces_result(scene_with_cube):
     # placed well off to the side (y=5) of the cube's footprint.
     rsu_positions = {0: (20.0, 5.0, 2.0)}
     vehicle_positions = {0: (-20.0, 5.0, 1.5)}
-    results = sim.simulate_frame(scene_with_cube, rsu_positions, vehicle_positions,
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, rsu_positions, vehicle_positions, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
 
 
@@ -131,8 +149,9 @@ def test_csi_has_expected_antenna_and_subcarrier_dimensions(scene_with_cube):
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
     rsu_positions = {0: (20.0, 5.0, 2.0)}
     vehicle_positions = {0: (-20.0, 5.0, 1.5)}
-    results = sim.simulate_frame(scene_with_cube, rsu_positions, vehicle_positions,
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, rsu_positions, vehicle_positions, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     num_rx_ant = DEFAULT_RADIO_PARAMS["rx_array"]["rows"] * DEFAULT_RADIO_PARAMS["rx_array"]["cols"]
     num_tx_ant = DEFAULT_RADIO_PARAMS["tx_array"]["rows"] * DEFAULT_RADIO_PARAMS["tx_array"]["cols"]
@@ -144,8 +163,9 @@ def test_beam_index_non_null_and_in_codebook_range(scene_with_cube):
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
     rsu_positions = {0: (20.0, 5.0, 2.0)}
     vehicle_positions = {0: (-20.0, 5.0, 1.5)}
-    results = sim.simulate_frame(scene_with_cube, rsu_positions, vehicle_positions,
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, rsu_positions, vehicle_positions, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     beam_index = results[0].beam_index
     assert beam_index is not None
@@ -156,8 +176,9 @@ def test_no_nan_or_inf_in_result(scene_with_cube):
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
     rsu_positions = {0: (20.0, 5.0, 2.0)}
     vehicle_positions = {0: (-20.0, 5.0, 1.5)}
-    results = sim.simulate_frame(scene_with_cube, rsu_positions, vehicle_positions,
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, rsu_positions, vehicle_positions, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     r = results[0]
     assert not np.isnan(r.csi).any()
@@ -175,8 +196,9 @@ def test_propagation_delay_matches_distance_over_c(scene_with_cube):
     rx_pos = (-20.0, 5.0, 1.5)
     rsu_positions = {0: tx_pos}
     vehicle_positions = {0: rx_pos}
-    results = sim.simulate_frame(scene_with_cube, rsu_positions, vehicle_positions,
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, rsu_positions, vehicle_positions, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     dist = math.dist(tx_pos, rx_pos)
     expected_delay = dist / _C
@@ -190,8 +212,9 @@ def test_no_padding_sentinel_leaks_into_propagation_delay(scene_with_cube):
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
     rsu_positions = {0: (20.0, 5.0, 2.0), 1: (20.0, 55.0, 2.0)}
     vehicle_positions = {0: (-20.0, 5.0, 1.5), 1: (-20.0, 65.0, 1.5)}
-    results = sim.simulate_frame(scene_with_cube, rsu_positions, vehicle_positions,
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, rsu_positions, vehicle_positions, frame=0, wireless_timestamp=0.0
+    )
     for r in results:
         assert r.propagation_delay_s >= 0.0
 
@@ -203,17 +226,17 @@ def test_no_padding_sentinel_leaks_into_propagation_delay(scene_with_cube):
 # from `scene_with_cube` as the sole obstruction.
 # --------------------------------------------------------------------------
 
-_LOS_CLEAR_TX = (20.0, 5.0, 2.0)     # offset to y=5, well clear of the cube's y=[-1,1]
+_LOS_CLEAR_TX = (20.0, 5.0, 2.0)  # offset to y=5, well clear of the cube's y=[-1,1]
 _LOS_CLEAR_RX = (-20.0, 5.0, 1.5)
 
-_BLOCKED_TX = (-5.0, -3.0, 0.3)      # diagonal placement across the cube: the direct
-_BLOCKED_RX = (5.0, 3.0, 0.3)        # straight line is blocked by it, while reflection/
-                                      # diffraction around it still returns a couple of
-                                      # non-direct-matching paths (empirically verified) --
-                                      # unlike a collinear blocked pair, which this scene's
-                                      # ray tracer returns zero paths for at all (a separate,
-                                      # legitimate outcome simulate_frame already handles by
-                                      # omitting the link, not something this test targets)
+_BLOCKED_TX = (-5.0, -3.0, 0.3)  # diagonal placement across the cube: the direct
+_BLOCKED_RX = (5.0, 3.0, 0.3)  # straight line is blocked by it, while reflection/
+# diffraction around it still returns a couple of
+# non-direct-matching paths (empirically verified) --
+# unlike a collinear blocked pair, which this scene's
+# ray tracer returns zero paths for at all (a separate,
+# legitimate outcome simulate_frame already handles by
+# omitting the link, not something this test targets)
 
 # Both west of the cube (clear direct path along x=-5), positioned so a
 # specular reflection off the cube's west face (x=-1) connects them too
@@ -226,8 +249,9 @@ _MULTIPATH_RX = (-5.0, 3.0, 0.3)
 def test_classify_los_unobstructed_geometry_is_los(scene_with_cube):
     """C.1: a known unobstructed LOS geometry -> LOS=True."""
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
-    results = sim.simulate_frame(scene_with_cube, {0: _LOS_CLEAR_TX}, {0: _LOS_CLEAR_RX},
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, {0: _LOS_CLEAR_TX}, {0: _LOS_CLEAR_RX}, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     assert results[0].los is True
 
@@ -235,8 +259,9 @@ def test_classify_los_unobstructed_geometry_is_los(scene_with_cube):
 def test_classify_los_blocked_geometry_is_nlos(scene_with_cube):
     """C.2: a known blocked geometry -> LOS=False."""
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
-    results = sim.simulate_frame(scene_with_cube, {0: _BLOCKED_TX}, {0: _BLOCKED_RX},
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, {0: _BLOCKED_TX}, {0: _BLOCKED_RX}, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     assert results[0].los is False
 
@@ -244,8 +269,9 @@ def test_classify_los_blocked_geometry_is_nlos(scene_with_cube):
 def test_classify_los_multipath_geometry_with_direct_path_is_los(scene_with_cube):
     """C.3: a multipath geometry with direct LOS + reflected path(s) -> LOS=True."""
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
-    results = sim.simulate_frame(scene_with_cube, {0: _MULTIPATH_TX}, {0: _MULTIPATH_RX},
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, {0: _MULTIPATH_TX}, {0: _MULTIPATH_RX}, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     assert results[0].los is True
     # genuinely multipath: more than just the direct path was found
@@ -278,8 +304,13 @@ def test_classify_los_repeated_runs_are_consistent(scene_with_cube):
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
     los_values = []
     for frame in range(3):
-        results = sim.simulate_frame(scene_with_cube, {0: _MULTIPATH_TX}, {0: _MULTIPATH_RX},
-                                      frame=frame, wireless_timestamp=0.1 * frame)
+        results = sim.simulate_frame(
+            scene_with_cube,
+            {0: _MULTIPATH_TX},
+            {0: _MULTIPATH_RX},
+            frame=frame,
+            wireless_timestamp=0.1 * frame,
+        )
         assert len(results) == 1
         los_values.append(results[0].los)
     assert len(set(los_values)) == 1
@@ -290,8 +321,9 @@ def test_classify_los_delay_matches_distance_over_c_within_tolerance(scene_with_
     """C.6: the LOS-consistent delay should match distance/c within the
     documented tolerance (_LOS_DELAY_TOLERANCE_S)."""
     sim = ChannelSimulator(dict(DEFAULT_RADIO_PARAMS))
-    results = sim.simulate_frame(scene_with_cube, {0: _LOS_CLEAR_TX}, {0: _LOS_CLEAR_RX},
-                                  frame=0, wireless_timestamp=0.0)
+    results = sim.simulate_frame(
+        scene_with_cube, {0: _LOS_CLEAR_TX}, {0: _LOS_CLEAR_RX}, frame=0, wireless_timestamp=0.0
+    )
     assert len(results) == 1
     assert results[0].los is True
     expected_delay = math.dist(_LOS_CLEAR_TX, _LOS_CLEAR_RX) / _C

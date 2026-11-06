@@ -31,7 +31,9 @@ router = APIRouter(prefix="/frames", tags=["frames"])
 
 
 @router.post(
-    "", response_model=FrameRead, status_code=status.HTTP_201_CREATED,
+    "",
+    response_model=FrameRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_frame(payload: FrameCreate, db: Session = Depends(get_db)) -> FrameRead:
@@ -41,7 +43,9 @@ def create_frame(payload: FrameCreate, db: Session = Depends(get_db)) -> FrameRe
 
 
 @router.post(
-    "/bulk", response_model=FrameBulkCreateResponse, status_code=status.HTTP_201_CREATED,
+    "/bulk",
+    response_model=FrameBulkCreateResponse,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_key)],
 )
 def create_frames_bulk(
