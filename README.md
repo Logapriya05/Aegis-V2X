@@ -1,8 +1,6 @@
 # Aegis-V2X
 
-**Calibrated Trust-Driven Joint Adaptive Control for Context-Aware, Resource-Efficient Digital Twin-Assisted V2X Communication**
-
-A Trust-Aware Digital Twin Framework for Intelligent Prediction, Synchronization, Beam Management, and Adaptive Communication in Next-Generation 6G V2X Networks.
+**A Calibrated Trust-Driven Autonomic Framework for Joint Prediction, Synchronization and Beam Adaptation in Digital Twin-Assisted 6G V2X Networks**
 
 B.Tech Research Project — Department of Computer Science and Engineering, Hindustan Institute of Technology and Science, Chennai. Target venue: **IEEE PerCom 2027**.
 
