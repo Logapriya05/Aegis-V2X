@@ -109,14 +109,34 @@ ruff check .
 
 ## Monitoring (optional)
 
+Standalone (Prometheus + Grafana only, backend run separately via `uvicorn`):
+
 ```bash
 cd ../configs/monitoring
 docker compose -f docker-compose.monitoring.yml up
 ```
 
+Or bring up everything (Postgres, this backend, Prometheus, Grafana) in one
+command from the repo root:
+
+```bash
+docker compose --profile backend --profile monitoring up --build
+```
+
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (admin / aegis) — "Aegis-V2X Backend
   Overview" dashboard is pre-provisioned.
+
+### Live demo -> Grafana
+
+`POST /api/v1/telemetry/live` (`{"trust", "criticality", "horizon", "action"}`)
+feeds the aegis-v2x-live-drive demo's TwinTrust-AP cycle straight into the
+Prometheus metrics in `app/core/metrics.py` — no database write, since the
+live demo has no scene/vehicle/frame of its own. Open the demo with
+`?telemetry=1` (default target `http://localhost:8000`, override with
+`&telemetryUrl=...`) while this backend is running to see live trust,
+criticality, horizon and FSDP-action panels update on the Grafana
+dashboard as you drive.
 
 ## Project layout
 

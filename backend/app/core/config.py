@@ -24,7 +24,10 @@ class Settings(BaseSettings):
             parsed into a list. Includes the Vite dev server default
             (http://localhost:5173) so the dashboard can talk to the API
             during local development before it is built and served
-            statically by the backend itself.
+            statically by the backend itself. Also includes the live demo
+            (aegis-v2x-live-drive) origins -- its GitHub Pages URL and the
+            common local static-server ports -- so it can POST to
+            `/api/v1/telemetry/live` for the Grafana live dashboard.
         api_v1_prefix: URL prefix for all versioned REST endpoints.
         project_name: Human-readable service name, used in OpenAPI docs.
         api_key: Optional shared secret gating write endpoints; unset means
@@ -36,7 +39,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg2://aegis:aegis@localhost:5432/aegis_v2x"
     environment: str = "development"
     log_level: str = "INFO"
-    cors_allow_origins: str = "http://localhost:5173,http://localhost:8000"
+    cors_allow_origins: str = (
+        "http://localhost:5173,http://localhost:8000,"
+        "http://localhost:5500,http://127.0.0.1:5500,"
+        "https://logapriya05.github.io"
+    )
     api_v1_prefix: str = "/api/v1"
     project_name: str = "Aegis-V2X Backend"
     api_key: str | None = None

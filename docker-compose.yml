@@ -1,8 +1,8 @@
 # Aegis-V2X — Local development stack
-# Only the `dev` service is active in Phase 1. `postgres`, `backend`,
-# `prometheus`, and `grafana` are pre-declared here so the Phase 3
-# (Logapriya) and monitoring work can be added without restructuring
-# this file — do not activate them before their owning phase begins.
+# `dev` runs always (Phase 1 baseline). `postgres` and `backend` need the
+# "backend" profile; `prometheus` and `grafana` need the "monitoring"
+# profile -- feeding the live demo's TwinTrust-AP telemetry through to a
+# Grafana dashboard (`docker compose --profile backend --profile monitoring up --build`).
 version: "3.9"
 
 services:
@@ -15,7 +15,6 @@ services:
     working_dir: /workspace
     tty: true
 
-  # --- Activated in Phase 3 (Logapriya) ---
   postgres:
     image: postgres:16-alpine
     profiles: ["backend"]
@@ -27,31 +26,54 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis_v2x"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  # --- Activated in Phase 3 (Logapriya) ---
   backend:
     profiles: ["backend"]
     build:
       context: .
       dockerfile: backend/Dockerfile
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://aegis:change_me_in_env@postgres:5432/aegis_v2x
+      CORS_ALLOW_ORIGINS: >-
+        http://localhost:5173,http://localhost:8000,
+        http://localhost:5500,http://127.0.0.1:5500,
+        https://logapriya05.github.io
     ports:
       - "8000:8000"
 
-  # --- Activated in Phase 3 (Logapriya) ---
+  # Scrapes `backend:8000/metrics` (prometheus-fastapi-instrumentator +
+  # the live telemetry metrics in app/core/metrics.py) every 5s -- see
+  # configs/monitoring/prometheus.yml.
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.55.1
     profiles: ["monitoring"]
+    volumes:
+      - ./configs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
 
-  # --- Activated in Phase 3 (Logapriya) ---
+  # Pre-provisioned with the Prometheus datasource and the "Aegis-V2X
+  # Backend Overview" dashboard -- see configs/monitoring/grafana/.
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.4.0
     profiles: ["monitoring"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: aegis
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./configs/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
       - "3000:3000"
+    depends_on:
+      - prometheus
 
 volumes:
   pgdata:
