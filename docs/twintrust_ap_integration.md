@@ -21,7 +21,7 @@ The live-drive demo (repository `Logapriya05/aegis-v2x-live-drive`, live at http
 
 All fitted or selected values below come from the **live-drive browser simulation**, not from CARLA, Sionna RT or real vehicles. Re-fit them before reporting results on any other data.
 
-- **Calibration** (a = 3.303, b = 0.660):
+- **Calibration** (first fit, a = 3.303, b = 0.660; the final fit is in the last section):
   - Target: a twin object is within 1 m of the LiDAR position on the next cycle.
   - Data: 8,000 training and 3,992 held-out cycles.
   - Held-out ECE: 0.129 → 0.042.
@@ -39,7 +39,7 @@ All fitted or selected values below come from the **live-drive browser simulatio
     - twin correct 51.2% vs 54.7%;
     - synchronisation 48.7 vs 45.8 per second, moved to degraded links rather than reduced.
 
-## Literature baseline, repeated runs and timing (2026-11-06)
+## Literature baseline, repeated runs and timing (2026-11-06, numbers superseded by the next section)
 
 All of this was run in the live-drive simulation. Details are in `research/README.md` sections 6–7 of `Logapriya05/aegis-v2x-live-drive`.
 
@@ -64,6 +64,39 @@ All of this was run in the live-drive simulation. Details are in `research/READM
   - Machine: a 2-vCPU Xeon 2.1 GHz cloud VM.
   - Not measured on a Jetson Orin. Re-run it on the target machine.
 - **Reproducibility:** seeded runs are statistically repeatable but not bit-identical. The demo's 2.5 s load warm-up runs in real time.
+
+## Final configuration: 3GPP channel, GRU twin predictor, corrected twin-correctness measure (2026-11-06)
+
+Full details are in `research/README.md` section 8 of `Logapriya05/aegis-v2x-live-drive`.
+
+- **Channel.** V2V links use 3GPP TR 37.885 V2V urban pathloss, vehicle blockage and shadowing, plus the TR 38.901 beam pattern.
+  - The link state (LOS / NLOSv / NLOS) comes from the simulated geometry.
+  - Parameters are in `configs/model.yaml` → `twintrust_ap.channel`; the link budget values are design choices.
+- **GRU twin predictor.** `ai/gru/train_twin_predictor.py` trains `GRUPredictor` (profile `perception.gru_twin`, hidden 32, 1 layer) on simulated tracks; the weights are in `models/gru_twin_predictor.json`.
+  - Offline, the prediction error at 0.1–1.0 s is 0.19–0.37 m, against 0.50–0.83 m for dead reckoning.
+  - All horizons are predicted in one pass: the additive horizon embedding before a linear head can only shift the output by a constant per horizon.
+- **Twin correctness** is now measured on the twin's position estimate at the same instant. Before, it was measured on the drawn object, which was smoothed and one step late.
+- **Calibration** was re-fitted: a = 4.399, b = 1.142, held-out ECE 0.162 → 0.031.
+- **Table.** b1 is kept: no table meets the accuracy rule, and b1–b3 are within noise of each other.
+- **AoI baseline.** The threshold with the lowest J is 0.5 s.
+
+**Repeated runs** (3 seed sets × 8 conditions × 150 s):
+
+| Policy | J | Vehicle twin correct | Syncs/s | Energy E |
+|---|---:|---:|---:|---:|
+| TwinTrust-AP (b1) | 0.083 | 78.6% | 30.6 | 0.249 |
+| Fixed | 0.139 | 85.8% | 44.5 | 0.372 |
+| AoI 0.5 s | 0.142 | 88.5% | 116.0 | 0.456 |
+
+- **Against the fixed policy:**
+  - ΔJ −0.055 [−0.076, −0.034]
+  - Δ syncs/s −13.9 [−27.6, −0.1]
+  - Δ vehicle twin correct −7.2 points [−8.4, −5.9]
+- **Against AoI 0.5 s:**
+  - ΔJ −0.058 [−0.081, −0.036]
+  - Δ vehicle twin correct −9.8 points [−13.9, −5.8]
+- **The accuracy constraint is not met.**
+- **GRU vs dead reckoning, in the loop.** The vehicle error is 0.09 m lower: [−0.168, −0.003] m for TwinTrust-AP, and the interval includes 0 for the fixed policy. The correctness gain is within noise.
 
 ## Known limitations found
 
