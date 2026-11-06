@@ -22,14 +22,16 @@ Each raw measurement is divided by a reference scale and clipped to [0, 1]:
       relative speed             = clip(max closing speed of road users within 60 m
                                         / relative_speed_ref_mps)
       blockage probability       = degraded V2V links / V2V links  (0 when there are none);
-                                   degraded = line of sight blocked OR mmWave beam misaligned
+                                   degraded = NLOS or NLOSv (3GPP TR 37.885 state)
+                                   OR mmWave beam misaligned
                                    (configs/model.yaml -> twintrust_ap.beam)
       sync age                   = a
       channel degradation        = 1 - q
       traffic density            = clip(road users within 50 m / density_ref)
 
     Twin correctness (the calibration target and the R term of J)
-      fraction of verifiable twin objects within correct_within_m of the LiDAR position
+      fraction of verifiable twin objects whose current position estimate (prediction from
+      the last message) is within correct_within_m of the LiDAR position
 
 The reference scales live in `configs/model.yaml` -> `twintrust_ap.evidence`.
 They are documented design choices (the values used by the live-drive demo,
