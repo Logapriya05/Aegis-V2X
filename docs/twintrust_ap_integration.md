@@ -111,3 +111,23 @@ This branch now passes the same checks as `main`: `make lint`, `make typecheck`,
 - The five PyTorch test modules are skipped when torch is not installed; CI installs `requirements.txt` only.
 - `tests/unit/conftest.py` prints that in the pytest header.
 - The modules run normally when `requirements/ai.txt` is installed.
+
+## Age bridging and twin-aided beam tracking (2026-11-06)
+
+Module: `ai/twintrust_ap/twin_adaptation.py` (tests: `tests/unit/test_twin_adaptation.py`); config: `twintrust_ap.adaptation` in `configs/model.yaml`.
+
+- **Why.** In the earlier demo results TwinTrust-AP's twin was correct 78.6% of the time, against 85.8% for the fixed policy at 30 GHz. The cause: after a `synchronize` action, prediction stayed off, so under +300 ms latency the twin extrapolated 0.2 s while its information was 0.4–0.9 s old.
+- **Age bridging.** Prediction stays on, and `H = max(H, smallest allowed h with h * 0.1 s >= mean information age)`.
+- **Twin-aided beam tracking.** Between sweeps, each tracked beam is steered to the bearing of the twin's predicted vehicle position; isolated vehicles are not tracked.
+- **Energy term.** The GRU predicts all horizons in one pass, so the demo charges its prediction cost at H = 5; the baselines are unchanged.
+- **Results** (demo, 3 seed sets × 8 conditions × 150 s; table b1 and calibration not re-tuned):
+
+| Band | J TT / fixed / AoI | Syncs/s TT / fixed | Twin correct TT / fixed / AoI |
+|---|---|---|---|
+| 15 GHz | 0.055 / 0.132 / 0.139 | 16.0 / 44.4 | 89.0 / 87.5 / 89.0% |
+| 30 GHz | 0.056 / 0.139 / 0.142 | 17.9 / 44.5 | 88.2 / 85.8 / 88.5% |
+| 100 GHz | 0.101 / 0.145 / 0.147 | 28.4 / 44.7 | 88.4 / 82.3 / 86.4% |
+
+- **Ablation (30 GHz):** age bridging adds 7.8 points of twin accuracy [2.7, 12.9]; beam tracking adds 1.1 [0.6, 1.6].
+- Browser simulation with a 3GPP statistical channel; not ray-traced or measured.
+
