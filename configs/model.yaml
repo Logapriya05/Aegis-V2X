@@ -61,6 +61,14 @@ perception:
     hidden_size: 128
     num_layers: 2
     input_features: ["csi", "snr", "beam_index", "mobility"]
+  # Twin motion predictor profile (ai/gru/train_twin_predictor.py, upstream main): the same
+  # GRUPredictor architecture, small enough for 10 Hz prediction of every road user in the
+  # live demo. Added here (not previously on this branch) only so ai/gru/model.py can be
+  # instantiated for the ONNX export check -- matches latest-main's configs/model.yaml verbatim.
+  gru_twin:
+    hidden_size: 32
+    num_layers: 1
+    input_features: ["forward_offset", "lateral_offset", "speed", "sin_heading_change", "age"]
 
 objective_function:
   # J = w1*L + w2*E + w3*O + w4*F - w5*R
