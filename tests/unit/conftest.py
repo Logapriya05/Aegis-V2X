@@ -15,6 +15,7 @@ import importlib.util
 
 TORCH_TEST_MODULES = [
     "test_gru.py",
+    "test_gru_twin_predictor.py",
     "test_phase4_pipeline.py",
     "test_pointpillars.py",
     "test_trust_estimator.py",
